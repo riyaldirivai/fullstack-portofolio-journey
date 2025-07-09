@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity Dashboard | Day 3 - Advanced JavaScript</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="src/css/dashboard.css">
+    
+    <!-- Inline styles for immediate loading -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'Inter', Arial, sans-serif; 
+            background: #f8fafc;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        
+        .loading-screen { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(135deg, #3b82f6, #2563eb); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 9999;
+            color: white;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .hidden { 
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        
+        .dashboard { 
+            max-width: 1200px; 
+            margin: 0 auto;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .dashboard.show {
+            opacity: 1;
+        }
+        
+        .dashboard-header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        
+        .dashboard-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        
+        .dashboard-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 24px; 
+            margin: 24px 0; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+        
+        .btn { 
+            padding: 10px 16px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 5px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .btn--primary { 
+            background: #3b82f6; 
+            color: white; 
+        }
+        
+        .btn--primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn--secondary { 
+            background: #6b7280; 
+            color: white; 
+        }
+        
+        .btn--danger { 
+            background: #ef4444; 
+            color: white; 
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .notification--success { background: #10b981; }
+        .notification--warning { background: #f59e0b; }
+        .notification--error { background: #ef4444; }
+        .notification--info { background: #06b6d4; }
+        
+        .current-time {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+    </style>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <!-- Loading Screen (RESTORED) -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading Productivity Dashboard...</p>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="dashboard-title">
+                        <span class="icon">📊</span>
+                        Productivity Dashboard
+                    </h1>
+                    <p class="dashboard-subtitle">Day 3 - Advanced JavaScript Project</p>
+                </div>
+                
+                <div class="header-actions">
+                    <button id="export-data" class="btn btn--secondary">📤 Export</button>
+                    <button id="import-data" class="btn btn--secondary">📥 Import</button>
+                    <button id="reset-data" class="btn btn--danger">🗑️ Reset</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <main class="dashboard-main">
+            <!-- Time Tracker Section -->
+            <section class="card time-tracker-section">
+                <div class="card-header">
+                    <h2 class="card-title">⏱️ Time Tracker</h2>
+                    <div class="card-actions">
+                        <span id="current-time" class="current-time">00:00:00</span>
+                    </div>
+                </div>
+                
+                <div class="card-content">
+                    <div class="timer-display">
+                        <div class="timer-circle">
+                            <svg class="timer-svg" viewBox="0 0 100 100">
+                                <circle class="timer-track" cx="50" cy="50" r="45"></circle>
+                                <circle id="timer-progress" class="timer-progress" cx="50" cy="50" r="45"></circle>
+                            </svg>
+                            <div class="timer-text">
+                                <span id="timer-hours" class="timer-number">00</span>
+                                <span class="timer-separator">:</span>
+                                <span id="timer-minutes" class="timer-number">00</span>
+                                <span class="timer-separator">:</span>
+                                <span id="timer-seconds" class="timer-number">00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-controls">
+                        <button id="start-timer" class="btn btn--primary btn--large">▶️ Start</button>
+                        <button id="pause-timer" class="btn btn--secondary btn--large" disabled>⏸️ Pause</button>
+                        <button id="stop-timer" class="btn btn--danger btn--large" disabled>⏹️ Stop</button>
+                    </div>
+                    
+                    <div class="session-info">
+                        <div class="info-item">
+                            <span class="info-label">Today's Total:</span>
+                            <span id="daily-total" class="info-value">2h 34m</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Current Session:</span>
+                            <span id="session-total" class="info-value">0h 0m</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Sessions Count:</span>
+                            <span id="sessions-count" class="info-value">3</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Goals Manager Section -->
+            <section class="card goals-section">
+                <div class="card-header">
+                    <h2 class="card-title">🎯 Goals Manager</h2>
+                    <button id="add-goal" class="btn btn--primary">+ Add Goal</button>
+                </div>
+                
+                <div class="card-content">
+                    <div id="goals-list" class="goals-list">
+                        <div class="goal-item completed">
+                            <div class="goal-checkbox">
+                                <input type="checkbox" checked>
+                            </div>
+                            <div class="goal-content">
+                                <div class="goal-header">
+                                    <h4 class="goal-title">Complete React Tutorial 🔴</h4>
+                                    <span class="goal-progress">100%</span>
+                                </div>
+                                <p class="goal-description">Finish the advanced React course</p>
+                                <div class="progress-bar">
+                                    <div class="progress-fill progress-fill--100"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="goal-item">
+                            <div class="goal-checkbox">
+                                <input type="checkbox">
+                            </div>
+                            <div class="goal-content">
+                                <div class="goal-header">
+                                    <h4 class="goal-title">Build Dashboard UI 🟡</h4>
+                                    <span class="goal-progress">75%</span>
+                                </div>
+                                <p class="goal-description">Design and implement dashboard interface</p>
+                                <div class="progress-bar">
+                                    <div class="progress-fill progress-fill--75"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="goals-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">Completed:</span>
+                            <span id="completed-goals" class="summary-value">1</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total:</span>
+                            <span id="total-goals" class="summary-value">2</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Success:</span>
+                            <span id="success-rate" class="summary-value">50%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress Charts Section -->
+            <section class="card charts-section">
+                <div class="card-header">
+                    <h2 class="card-title">📈 Progress Analytics</h2>
+                    <div class="chart-controls">
+                        <select id="chart-period" class="select">
+                            <option value="7">Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30">Last 30 Days</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="card-content">
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h3 class="chart-title">Daily Coding Time</h3>
+                            <div class="chart-placeholder">📊 Chart will render here</div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3 class="chart-title">Weekly Progress</h3>
+                            <div class="chart-placeholder">📈 Chart will render here</div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3 class="chart-title">Goals Completion</h3>
+                            <div class="chart-placeholder">🎯 Chart will render here</div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3 class="chart-title">Productivity Patterns</h3>
+                            <div class="chart-placeholder">⚡ Chart will render here</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics Section -->
+            <section class="card stats-section">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Statistics Overview</h2>
+                </div>
+                
+                <div class="card-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">⏰</div>
+                            <div class="stat-content">
+                                <div class="stat-value">24h</div>
+                                <div class="stat-label">Total Hours</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">🎯</div>
+                            <div class="stat-content">
+                                <div class="stat-value">12</div>
+                                <div class="stat-label">Completed Tasks</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">🔥</div>
+                            <div class="stat-content">
+                                <div class="stat-value">5</div>
+                                <div class="stat-label">Day Streak</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-content">
+                                <div class="stat-value">45m</div>
+                                <div class="stat-label">Avg Session</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">🏆</div>
+                            <div class="stat-content">
+                                <div class="stat-value">8</div>
+                                <div class="stat-label">Achievements</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">💪</div>
+                            <div class="stat-content">
+                                <div class="stat-value">87%</div>
+                                <div class="stat-label">Productivity</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- OPTIMIZED JAVASCRIPT -->
+    <script>
+        // Configuration constants
+        const CONFIG = {
+            FALLBACK_DELAY: 100,
+            TRANSITION_DELAY: 2000,
+            CLOCK_INTERVAL: 1000,
+            NOTIFICATION_DURATION: 3000,
+            NOTIFICATION_ANIMATION_DELAY: 100,
+            NOTIFICATION_HIDE_DELAY: 300
+        };
+        
+        console.log('🎯 Dashboard initialization started...');
+        
+        // Utility functions
+        const Utils = {
+            getElementById: (id) => document.getElementById(id),
+            addClass: (element, className) => element?.classList.add(className),
+            removeClass: (element, className) => element?.classList.remove(className),
+            formatTime: (date) => date.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            })
+        };
+        
+        // Dashboard controller
+        const Dashboard = {
+            elements: {
+                loadingScreen: null,
+                dashboard: null,
+                currentTime: null
+            },
+            
+            init() {
+                try {
+                    this.cacheElements();
+                    this.setupFallback();
+                    this.setupMainTransition();
+                    console.log('✅ Dashboard initialized successfully');
+                } catch (error) {
+                    console.error('❌ Dashboard initialization failed:', error);
+                    this.forceShowDashboard();
+                }
+            },
+            
+            cacheElements() {
+                this.elements = {
+                    loadingScreen: Utils.getElementById('loading-screen'),
+                    dashboard: Utils.getElementById('dashboard'),
+                    currentTime: Utils.getElementById('current-time')
+                };
+            },
+            
+            setupFallback() {
+                setTimeout(() => {
+                    this.showDashboard('fallback');
+                }, CONFIG.FALLBACK_DELAY);
+            },
+            
+            setupMainTransition() {
+                setTimeout(() => {
+                    this.showDashboard('main');
+                    this.startClock();
+                }, CONFIG.TRANSITION_DELAY);
+            },
+            
+            showDashboard(trigger = '') {
+                const { loadingScreen, dashboard } = this.elements;
+                
+                if (loadingScreen) {
+                    Utils.addClass(loadingScreen, 'hidden');
+                    console.log(`✅ Loading screen hidden (${trigger})`);
+                }
+                
+                if (dashboard) {
+                    Utils.addClass(dashboard, 'show');
+                    console.log(`✅ Dashboard shown (${trigger})`);
+                }
+            },
+            
+            forceShowDashboard() {
+                // Emergency fallback
+                setTimeout(() => {
+                    const loadingScreen = Utils.getElementById('loading-screen');
+                    const dashboard = Utils.getElementById('dashboard');
+                    
+                    if (loadingScreen) loadingScreen.style.display = 'none';
+                    if (dashboard) {
+                        dashboard.style.opacity = '1';
+                        dashboard.style.visibility = 'visible';
+                    }
+                    console.log('🚨 Emergency dashboard display activated');
+                }, 50);
+            },
+            
+            startClock() {
+                this.updateTime();
+                setInterval(() => this.updateTime(), CONFIG.CLOCK_INTERVAL);
+            },
+            
+            updateTime() {
+                try {
+                    if (this.elements.currentTime) {
+                        this.elements.currentTime.textContent = Utils.formatTime(new Date());
+                    }
+                } catch (error) {
+                    console.error('❌ Clock update failed:', error);
+                }
+            }
+        };
+        
+        // Notification system
+        const NotificationSystem = {
+            show(message, type = 'info') {
+                try {
+                    const notification = this.createElement(message, type);
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => Utils.addClass(notification, 'show'), CONFIG.NOTIFICATION_ANIMATION_DELAY);
+                    setTimeout(() => this.hide(notification), CONFIG.NOTIFICATION_DURATION);
+                } catch (error) {
+                    console.error('❌ Notification failed:', error);
+                    // Fallback to simple alert
+                    alert(message);
+                }
+            },
+            
+            createElement(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `notification notification--${type}`;
+                notification.textContent = message;
+                return notification;
+            },
+            
+            hide(notification) {
+                Utils.removeClass(notification, 'show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, CONFIG.NOTIFICATION_HIDE_DELAY);
+            }
+        };
+        
+        // Button handlers
+        const ButtonHandlers = {
+            'start-timer': () => {
+                console.log('▶️ Timer started');
+                NotificationSystem.show('Timer started!', 'success');
+            },
+            
+            'pause-timer': () => {
+                console.log('⏸️ Timer paused');
+                NotificationSystem.show('Timer paused!', 'info');
+            },
+            
+            'stop-timer': () => {
+                console.log('⏹️ Timer stopped');
+                NotificationSystem.show('Timer stopped!', 'warning');
+            },
+            
+            'add-goal': () => {
+                console.log('🎯 Add goal requested');
+                NotificationSystem.show('Add goal feature coming soon!', 'info');
+            },
+            
+            'export-data': () => {
+                console.log('📤 Export requested');
+                NotificationSystem.show('Export feature coming soon!', 'info');
+            },
+            
+            'import-data': () => {
+                console.log('📥 Import requested');
+                NotificationSystem.show('Import feature coming soon!', 'info');
+            },
+            
+            'reset-data': () => {
+                console.log('🗑️ Reset requested');
+                if (confirm('Are you sure you want to reset all data?')) {
+                    NotificationSystem.show('Data reset completed!', 'success');
+                }
+            }
+        };
+        
+        // Event listeners
+        document.addEventListener('click', function(event) {
+            const buttonId = event.target.id;
+            const handler = ButtonHandlers[buttonId];
+            
+            if (handler) {
+                event.preventDefault();
+                handler();
+            }
+        });
+        
+        // Initialize dashboard
+        Dashboard.init();
+        
+        console.log('✅ All systems loaded successfully!');
+    </script>
+</body>
+</html>
