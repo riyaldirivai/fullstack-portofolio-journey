@@ -4,8 +4,8 @@
 This repository documents my **30-day intensive journey** from **Urban Planning Background** to **Full-Stack Developer**. 
 
 ### 👨‍💻 About Me
-- **Name**: Riyaldi Rivai (@promptsaklar25)
-- **Background**: Teknik Perencanaan Wilayah dan Kota (S1)
+- **Name**: Riyaldi Rivai (@riyaldirivai)
+- **Background**: Urban and Regional Planning
 - **Current Goal**: Become a freelance Full-Stack Developer in 30 days
 - **Daily Commitment**: 10+ hours coding daily
 - **Journey Start**: July 9, 2025
