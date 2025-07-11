@@ -1,0 +1,83 @@
+# ===========================================
+# PRODUCTIVITY DASHBOARD API - DOCKER COMPOSE
+# Development environment with MongoDB
+# ===========================================
+
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: productivity-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: productivity_dashboard
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - productivity-network
+
+  # API Server
+  api:
+    build: 
+      context: .
+      target: production
+    container_name: productivity-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/productivity_dashboard?authSource=admin
+      JWT_SECRET: your-jwt-secret-key-here
+      JWT_REFRESH_SECRET: your-refresh-secret-key-here
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./src:/app/src:ro
+      - api_logs:/app/logs
+    networks:
+      - productivity-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MongoDB Express (Database Admin UI)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: productivity-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    networks:
+      - productivity-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  api_logs:
+    driver: local
+
+networks:
+  productivity-network:
+    driver: bridge
