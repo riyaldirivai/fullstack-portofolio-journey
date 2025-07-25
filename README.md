@@ -54,7 +54,7 @@ This repository documents my \*\*30-day int### 🏆 Success Metrics & Achievemen
 
 ### 👨‍💻 About Me
 
-- **Name**: Riyaldi Rivai (@promptsaklar25)
+- **Name**: Riyaldi Rivai (@riyaldirivai)
 - **Background**: Teknik Perencanaan Wilayah dan Kota (S1)
 - **Current Goal**: Become a freelance Full-Stack Developer in 30 days
 - **Daily Commitment**: 10+ hours coding daily
